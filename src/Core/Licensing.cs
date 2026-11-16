@@ -113,10 +113,12 @@ namespace PagefileMonitor
    var check=Check(c,Post(c.GumroadProductId,key,false,out body),body,false,out receipt,out reason);
    if(check!=LicenseCheck.Valid)throw new InvalidOperationException(reason);
    if((receipt.uses??0)>=MaxActivations)throw new InvalidOperationException("This key has already been activated "+MaxActivations+" times. Contact support to reset it.");
-   check=Check(c,Post(c.GumroadProductId,key,true,out body),body,true,out receipt,out reason);
-   if(check!=LicenseCheck.Valid)throw new InvalidOperationException(reason);
+   // Save before counting. Gumroad cannot give an activation back, so a failed write must happen before one is spent,
+   // and a lost reply to the counting call must leave the customer licensed.
    var data=ProtectedData.Protect(Encoding.UTF8.GetBytes(Json.Write(new SavedLicense{Key=key,Activated=Units.Now})),null,DataProtectionScope.LocalMachine);
    using(var f=new FileStream(FilePath,FileMode.CreateNew,FileAccess.Write,FileShare.None)){f.Write(data,0,data.Length);f.Flush(true);}
+   check=Check(c,Post(c.GumroadProductId,key,true,out body),body,true,out receipt,out reason);
+   if(check==LicenseCheck.Rejected){try{File.Delete(FilePath);}catch{}throw new InvalidOperationException(reason);}
   }
   // Gumroad's public License API cannot give an activation back, so this only removes the key from this PC.
   public static void Deactivate()

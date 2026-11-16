@@ -83,6 +83,6 @@ Compilation, automated tests, live read-only collection, local communication, an
 
 ## Theme and editions
 
-The navy/cyan theme credits Dave Plummer and TMOG for inspiration. Free includes monitoring, recommendations, manual changes and recovery. Pro adds optional auto-grow. Sales are not configured yet. See [Gumroad licensing](docs/LICENSING.md) for setup, updating an installed service and validation limits.
+The navy/cyan theme credits Dave Plummer and TMOG for inspiration. Free includes monitoring, recommendations, manual changes and recovery. Pro adds optional auto-grow. The Gumroad product is an unpublished draft, so Pro is not on sale yet. See [Gumroad licensing](docs/LICENSING.md) for setup, updating an installed service and validation limits.
 
 

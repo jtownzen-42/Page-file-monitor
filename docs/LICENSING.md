@@ -1,6 +1,6 @@
 # Free / Pro and Gumroad licensing
 
-This build is Free by default. `commerce.json` ships with an empty Gumroad product ID, so no checkout opens and no key can activate. Do not advertise Pro as released until both licensing and the Windows VM acceptance checklist pass.
+This build is Free by default. `commerce.json` points at the Pagefile Monitor Pro product in the Alexx Forge Gumroad store. That product is an unpublished draft as of November 16, 2026, so **Get Pro** opens a page that says it is not for sale and no customer keys exist. Do not publish the product or advertise Pro until both licensing and the Windows VM acceptance checklist pass.
 
 | Feature | Free | Pro |
 |---|---|---|
@@ -25,7 +25,7 @@ Get Pro opens the Gumroad product page; Gumroad emails the key with the receipt.
 
 The license client posts `product_id`, `license_key` and `increment_uses_count` to `https://api.gumroad.com/v2/licenses/verify` over HTTPS. A key is accepted when Gumroad reports success for this product and the purchase is not refunded, charged back, under an unresolved dispute, or a lapsed subscription. Keys are stored using Windows machine-scope DPAPI in the protected service data directory. DPAPI is local credential protection, not protection from the PC's administrator or a guarantee against software patching. The source is public, so the check deters casual copying only.
 
-**Activations.** One purchase covers one person on up to three activations. Activation checks the key without counting first, refuses a key that already has three activations, and only then counts one. Gumroad's public License API cannot give an activation back, so **Remove license from this PC** deletes the stored key locally and does not free an activation. A customer who reinstalls more than three times needs the publisher to reset the count in Gumroad.
+**Activations.** One purchase covers one person on up to three activations. Activation checks the key without counting first, refuses a key that already has three activations, saves the key, and only then counts one. If the reply to the counting call is lost the PC stays licensed; if Gumroad rejects it the saved key is removed. Gumroad's public License API cannot give an activation back, so **Remove license from this PC** deletes the stored key locally and does not free an activation. A customer who reinstalls more than three times needs the publisher to reset the count in Gumroad.
 
 **Re-checks and offline use.** The service re-checks a stored key about once a day without counting an activation. If Gumroad cannot be reached, Pro stays active and the check is retried hourly. Only an explicit answer from Gumroad turns Pro off: a timeout, a server error, a proxy page or a captive portal does not. A rejected key stays on disk and is retried hourly, so a publisher-side configuration mistake cannot erase customers' licenses. This matches Stele. The cost is that someone who blocks `api.gumroad.com` after activating keeps Pro after a refund.
 
@@ -37,7 +37,7 @@ For an existing installation: use **Settings → Update installed service** from
 
 ## Evidence and remaining validation
 
-Decision tests cover product identity, refund, chargeback, dispute, subscription state, the activation limit, the reachable/unreachable distinction and the checkout address. No request has been sent to Gumroad from this code: the product does not exist yet, so live checkout, activation, the 404 reply for an unknown key, and removal are untested. Decision tests are not an end-to-end billing validation.
+Decision tests cover product identity, refund, chargeback, dispute, subscription state, the activation limit, the reachable/unreachable distinction and the checkout address. No key has been activated with this code: the product is an unpublished draft with no purchases, so live checkout, activation, the 404 reply for an unknown key, and removal are untested. Decision tests are not an end-to-end billing validation.
 
 Official reference: [Gumroad License API](https://gumroad.com/api#licenses).
 
