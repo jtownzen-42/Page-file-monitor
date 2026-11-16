@@ -1,4 +1,4 @@
-using PagefileMonitor;
+﻿using PagefileMonitor;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -119,7 +119,7 @@ namespace PagefileMonitorDesktop
    await Elevated("--policy "+(string)((Button)sender).Tag+" "+gib*1024,"Update auto-grow policy with a total ceiling of "+gib+" GiB. Only verified, approved fixed locations can grow. Moves and reductions still require review.");
   }
   async void Mark(object sender,RoutedEventArgs e)
-  {try{var r=await Task.Run(()=>PipeProtocol.Send(new Request{Command="mark",Value=(string)((Button)sender).Tag}));if(!r.Ok)MessageBox.Show(r.Message);await Refresh();}catch(Exception ex){MessageBox.Show(ex.Message);}}
+  {try{string marker=(string)((Button)sender).Tag;var r=await Task.Run(()=>PipeProtocol.Send(new Request{Command="mark",Value=marker}));if(!r.Ok)MessageBox.Show(r.Message);await Refresh();}catch(Exception ex){MessageBox.Show(ex.Message);}}
   async void RefreshClick(object sender,RoutedEventArgs e)=>await Refresh();
   async void History(object sender,RoutedEventArgs e)
   {
