@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><AssemblyName>PagefileMonitor.Recovery</AssemblyName></PropertyGroup><ItemGroup><ProjectReference Include="../Core/PagefileMonitor.Core.csproj"/><Reference Include="System.ServiceProcess"/><Reference Include="System.Windows.Forms"/></ItemGroup></Project>

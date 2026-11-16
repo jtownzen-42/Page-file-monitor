@@ -1,0 +1,60 @@
+<Window x:Class="PagefileMonitorDesktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Pagefile Monitor" Width="1120" Height="780" MinWidth="900" MinHeight="640" WindowStartupLocation="CenterScreen" Background="#020D23" Foreground="#D8F0FF" FontFamily="Segoe UI" FontSize="14">
+ <Grid Margin="26"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <DockPanel Margin="0,0,0,18"><StackPanel><TextBlock Text="PAGEFILE MONITOR" FontSize="12" Foreground="#00BDFF"/><TextBlock Text="Memory command center." FontSize="28" FontWeight="SemiBold"/></StackPanel><TextBlock DockPanel.Dock="Right" x:Name="Connection" Text="Connecting…" HorizontalAlignment="Right" VerticalAlignment="Center"/></DockPanel>
+  <Border Grid.Row="1" Background="#061735" Padding="16" CornerRadius="8" Margin="0,0,0,18"><TextBlock x:Name="Health" Text="Reading Windows settings. Monitoring does not resize your page file."/></Border>
+  <TabControl TabStripPlacement="Left" Grid.Row="2" Background="#020D23" BorderBrush="#143E72">
+   <TabItem Header="Overview"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20">
+    <UniformGrid Columns="3" Margin="0,0,0,16">
+     <StackPanel><TextBlock Text="COMMITTED / LIMIT" Foreground="#82B7D8"/><TextBlock x:Name="Commit" Text="—" FontSize="23"/></StackPanel>
+     <StackPanel><TextBlock Text="PEAK SINCE BOOT" Foreground="#82B7D8"/><TextBlock x:Name="Peak" Text="—" FontSize="23"/></StackPanel>
+     <StackPanel><TextBlock Text="AVAILABLE RAM" Foreground="#82B7D8"/><TextBlock x:Name="Available" Text="—" FontSize="23"/></StackPanel>
+    </UniformGrid>
+    <ProgressBar x:Name="Pressure" Height="12" Maximum="100" Foreground="#00BDFF" Background="#26364D"/>
+    <TextBlock x:Name="Coverage" Margin="0,16" Text="Learning begins when the service is installed."/>
+    <WrapPanel><Button Content="Install monitoring service" Click="Install"/><Button Content="Open TMOG" Click="Tmog"/><Button Content="Refresh" Click="RefreshClick"/></WrapPanel>
+    <TextBlock Text="Mark the workload you are actually running" Margin="0,12,0,4" FontWeight="SemiBold"/>
+    <WrapPanel><Button Content="Light" Tag="light" Click="Mark"/><Button Content="Normal" Tag="normal" Click="Mark"/><Button Content="Heavy" Tag="heavy" Click="Mark"/><Button Content="End marker" Tag="unmarked" Click="Mark"/></WrapPanel>
+    <TextBox x:Name="OverviewDetails" Height="190" Margin="0,12,0,0"/>
+   </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="History"><Grid Margin="20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="180"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <WrapPanel><Button Content="Load recent history" Click="History"/><Button Content="Export history CSV" Click="Export"/><Button Content="Export current report" Click="Report"/><TextBlock Text="Last 24 hours • minute maxima • GiB" VerticalAlignment="Center"/></WrapPanel>
+    <Grid Grid.Row="1" Background="#061735"><Canvas x:Name="Chart" ClipToBounds="True" Margin="10"/><TextBlock x:Name="ChartLabel" Margin="12" Foreground="#82B7D8" VerticalAlignment="Top"/></Grid>
+    <TextBox x:Name="HistoryText" Grid.Row="2" FontFamily="Consolas" FontSize="12" Margin="0,12,0,0" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+   </Grid></TabItem>
+   <TabItem Header="Recommendations"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20">
+    <TextBlock Text="An estimate you can inspect" FontSize="22"/><TextBlock Text="Fixed initial and maximum allocations, with explicit headroom and disk reserves." Foreground="#82B7D8" Margin="0,8"/>
+    <TextBox x:Name="RecommendationText" MinHeight="280"/>
+    <WrapPanel><Button Content="Confirm representative heavy sessions" Click="ConfirmHeavy"/><Button Content="Record exhaustion review" Click="ReviewExhaustion"/><Button Content="Review and apply" Click="Apply"/><Button Content="Finish verified relocation" Click="Finish"/></WrapPanel>
+    <TextBlock Text="Changes require administrator rights and a restart. This app never restarts Windows automatically." Foreground="#82B7D8" Margin="0,12"/>
+   </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="Changes &amp; Recovery"><Grid Margin="20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <WrapPanel><Button Content="Restore original" Tag="restore-original" Click="Restore"/><Button Content="Restore previous" Tag="restore-previous" Click="Restore"/><Button Content="Return to system-managed" Tag="system-managed" Click="Restore"/></WrapPanel>
+    <WrapPanel Grid.Row="1"><Button Content="Open backups" Click="Backups"/><Button Content="Load change log" Click="Events"/><Button Content="Acknowledge outside change" Click="Acknowledge"/></WrapPanel>
+    <TextBox Grid.Row="2" x:Name="ChangeText" Margin="0,10,0,0"/>
+   </Grid></TabItem>
+   <TabItem Header="Settings"><StackPanel Margin="20">
+    <TextBlock Text="Automation stays within your approved policy." FontSize="22" Margin="0,0,0,18"/>
+    <TextBlock Text="Auto-grow applies only to the fixed locations you reviewed and verified after restart. Every shrink or move requires review."/>
+    <WrapPanel Margin="0,16"><TextBlock Text="Total page-file ceiling (GiB)" VerticalAlignment="Center" Margin="0,0,15,0"/><TextBox x:Name="Ceiling" Text="64" IsReadOnly="False" Width="90"/></WrapPanel>
+    <WrapPanel><Button Content="Enable auto-grow" Tag="on" Click="AutoGrow"/><Button Content="Disable auto-grow" Tag="off" Click="AutoGrow"/></WrapPanel>
+    <TextBlock x:Name="PolicyText" Margin="0,16"/>
+    <TextBlock Text="Local storage: seven days of detail, 90 days of minute summaries, 512 MiB telemetry budget. Application names and memory totals are recorded; document contents, titles and command lines are not." Margin="0,12"/>
+    <WrapPanel><Button Content="Update installed service" Click="Upgrade"/><Button Content="Remove monitoring service" Click="Uninstall"/><Button Content="Minimize to tray" Click="Tray"/></WrapPanel>
+    <TextBlock Text="Removing the service retains your data, backups and recovery tools. It does not alter your page-file configuration." Foreground="#82B7D8"/>
+   </StackPanel></TabItem>
+   <TabItem Header="License &amp; About"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24">
+    <TextBlock Text="FREE / PRO" Foreground="#00BDFF" FontSize="26"/>
+    <TextBlock x:Name="LicenseStatus" Text="Free edition" Margin="0,12" FontSize="18"/>
+    <TextBlock Text="Free — continuous monitoring, workload markers, history and exports, explained recommendations, reviewed manual changes, backups and recovery." Margin="0,8"/>
+    <TextBlock Text="Pro — everything in Free, plus optional automatic growth within your reviewed limits. All learning, disk-space and restart safeguards still apply." Margin="0,8"/>
+    <TextBlock Text="Online license validation is required for automatic growth. If verification is unavailable, automatic growth pauses; monitoring, manual changes and recovery continue." Foreground="#82B7D8" Margin="0,8"/>
+    <WrapPanel><Button Content="Get Pro" Click="BuyPro"/><Button Content="Activate license" Click="ActivateLicense"/><Button Content="Deactivate this PC" Click="DeactivateLicense"/></WrapPanel>
+    <TextBlock Text="Inspiration" FontSize="22" Margin="0,28,0,8"/>
+    <TextBlock Text="A nod to Dave Plummer and Task Manager TMOG for inspiring a clear, instrument-panel approach to understanding Windows performance. This independently developed app uses its own interface and code."/>
+    <WrapPanel><Button Content="Visit tmog.org" Click="TmogSite"/><Button Content="Open TMOG" Click="Tmog"/></WrapPanel>
+   </StackPanel></ScrollViewer></TabItem>
+  </TabControl>
+  <TextBlock Grid.Row="3" Text="Inspired by Dave Plummer and TMOG • tmog.org • Independent project; no affiliation or endorsement." FontSize="11" Foreground="#82B7D8" Margin="0,16,0,0"/>
+ </Grid>
+</Window>
+

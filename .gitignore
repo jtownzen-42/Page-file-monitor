@@ -1,0 +1,22 @@
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# Build output; produce it with build.ps1
+/release/
+
+# Machine-specific validation evidence (disk identities, local process names, local paths).
+# The Markdown summaries in validation/ are tracked.
+/validation/*.json
+/validation/*.txt
+/validation/*.err
+
+# Never commit runtime data or credentials
+telemetry.sqlite*
+license.bin
+owner.sid
+policy.json
+journal.json
+.env
