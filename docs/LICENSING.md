@@ -39,6 +39,8 @@ For an existing installation: use **Settings → Update installed service** from
 
 Decision tests cover product identity, refund, chargeback, dispute, subscription state, the activation limit, the reachable/unreachable distinction and the checkout address. No key has been activated with this code: the product is an unpublished draft with no purchases, so live checkout, activation, the 404 reply for an unknown key, and removal are untested. Decision tests are not an end-to-end billing validation.
 
+One live read-only check was made on November 16, 2026: a made-up key was posted to the verify endpoint for this product without counting a use. Gumroad answered HTTP 404 with `{"success":false,"message":"That license does not exist for the provided product."}`, and `Licensing.Check` classified that reply as Rejected. The request was sent from PowerShell, so the app's own HTTP call has still not been exercised.
+
 Official reference: [Gumroad License API](https://gumroad.com/api#licenses).
 
 ## Inspiration
