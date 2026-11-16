@@ -33,14 +33,34 @@ static class Tests
    Test("Non-admin or read-only pipe rejects settings writes",()=>{var reply=PipeProtocol.Send(new Request{Command="policy",Enabled=true,CeilingMB=65536});Assert(!reply.Ok);});
    Console.WriteLine($"RESULT: {passed} passed, {failures} failed");return failures==0?0:1;
   }
-  Test("License requires publisher configuration",()=>Assert(!Licensing.Accept(new CommerceConfig(),new LicenseReceipt(),null,DateTimeOffset.UtcNow)));
-  Test("License checks identity, instance, expiry and revocation",()=>{
-   var c=new CommerceConfig{StoreId=1,ProductId=2,VariantId=3};
-   Func<LicenseReceipt> valid=()=>new LicenseReceipt{valid=true,activated=true,meta=new LicenseMeta{store_id=1,product_id=2,variant_id=3},instance=new LicenseInstance{id="pc"},license_key=new LicenseDetails{status="active"}};
-   Assert(Licensing.Accept(c,valid(),"pc",DateTimeOffset.UtcNow));
-   Assert(Licensing.Accept(c,valid(),null,DateTimeOffset.UtcNow));
-   foreach(var alter in new Action<LicenseReceipt>[] {x=>x.meta.store_id=8,x=>x.meta.product_id=8,x=>x.meta.variant_id=8,x=>x.instance.id="other",x=>x.license_key.status="disabled",x=>x.license_key.status="expired",x=>x.valid=false,x=>x.license_key.expires_at="bad",x=>x.license_key.expires_at="2000-01-01T00:00:00Z",x=>x.instance=null}){var r=valid();alter(r);Assert(!Licensing.Accept(c,r,"pc",DateTimeOffset.UtcNow));}
-   var future=valid();future.license_key.expires_at=DateTimeOffset.UtcNow.AddDays(1).ToString("o");Assert(Licensing.Accept(c,future,"pc",DateTimeOffset.UtcNow));
+  Test("License requires publisher configuration",()=>{string why;Assert(!new CommerceConfig().Ready);Assert(!Licensing.Accept(new CommerceConfig(),new GumroadReceipt{success=true,purchase=new GumroadPurchase()},false,out why));
+   // A 1.2.0 commerce.json with numeric Lemon Squeezy IDs must not read as configured.
+   Assert(!Json.Read<CommerceConfig>("{\"StoreId\":1,\"ProductId\":2,\"VariantId\":3,\"CheckoutUrl\":\"\"}").Ready);});
+  Test("License checks product, refund, dispute, subscription and activation limit",()=>{
+   var c=new CommerceConfig{GumroadProductId="prod=="};string why;
+   Func<GumroadReceipt> valid=()=>new GumroadReceipt{success=true,uses=1,purchase=new GumroadPurchase{product_id="prod==",refunded=false,disputed=false,chargebacked=false}};
+   Assert(Licensing.Accept(c,valid(),false,out why) && why==null);
+   Assert(Licensing.Accept(c,valid(),true,out why));
+   foreach(var alter in new Action<GumroadReceipt>[] {x=>x.success=false,x=>x.success=null,x=>x.purchase=null,x=>x.purchase.product_id="other",x=>x.purchase.product_id=null,x=>x.purchase.refunded=true,x=>x.purchase.chargebacked=true,x=>x.purchase.disputed=true,x=>x.purchase.subscription_ended_at="2026-01-01T00:00:00Z",x=>x.purchase.subscription_cancelled_at="2026-01-01T00:00:00Z",x=>x.purchase.subscription_failed_at="2026-01-01T00:00:00Z"}){var r=valid();alter(r);Assert(!Licensing.Accept(c,r,false,out why) && !string.IsNullOrEmpty(why));}
+   var won=valid();won.purchase.disputed=true;won.purchase.dispute_won=true;Assert(Licensing.Accept(c,won,false,out why));
+   var third=valid();third.uses=Licensing.MaxActivations;Assert(Licensing.Accept(c,third,true,out why));
+   var fourth=valid();fourth.uses=Licensing.MaxActivations+1;Assert(!Licensing.Accept(c,fourth,true,out why));Assert(Licensing.Accept(c,fourth,false,out why),"Re-checks must not count activations");
+  });
+  Test("Only an explicit Gumroad answer can reject a license",()=>{
+   var c=new CommerceConfig{GumroadProductId="prod=="};GumroadReceipt r;string why;
+   const string good="{\"success\":true,\"uses\":2,\"purchase\":{\"product_id\":\"prod==\",\"refunded\":false,\"disputed\":false,\"dispute_won\":null,\"chargebacked\":false,\"subscription_ended_at\":null,\"email\":\"ignored\"}}";
+   Assert(Licensing.Check(c,200,good,false,out r,out why)==LicenseCheck.Valid && r.uses==2);
+   Assert(Licensing.Check(c,404,"{\"success\":false,\"message\":\"That license does not exist for the provided product.\"}",false,out r,out why)==LicenseCheck.Rejected);
+   Assert(Licensing.Check(c,200,good.Replace("\"refunded\":false","\"refunded\":true"),false,out r,out why)==LicenseCheck.Rejected);
+   foreach(var status in new[]{0,408,429,500,502,503})Assert(Licensing.Check(c,status,good,false,out r,out why)==LicenseCheck.Unreachable && r==null);
+   foreach(var body in new[]{null,"","<html>Sign in to this network</html>","{}","[]","{\"error\":\"blocked\"}"}){Assert(Licensing.Check(c,200,body,false,out r,out why)==LicenseCheck.Unreachable,"Body: "+body);Assert(Licensing.Check(c,403,body,false,out r,out why)==LicenseCheck.Unreachable);}
+   Assert(Licensing.Entitled(LicenseCheck.Valid) && Licensing.Entitled(LicenseCheck.Unreachable) && !Licensing.Entitled(LicenseCheck.Rejected));
+  });
+  Test("Checkout opens only an https Gumroad address",()=>{
+   Uri uri;Func<string,string,bool> ok=(id,url)=>new CommerceConfig{GumroadProductId=id,CheckoutUrl=url}.TryCheckout(out uri);
+   Assert(ok("p","https://example.gumroad.com/l/abc") && ok("p","https://gumroad.com/l/abc"));
+   foreach(var url in new[]{null,"","http://example.gumroad.com/l/abc","https://gumroad.com.evil.example/l/abc","https://evilgumroad.com/l/abc","https://example.lemonsqueezy.com/buy/1","file:///C:/x.exe","gumroad.com/l/abc"})Assert(!ok("p",url),"Accepted "+url);
+   Assert(!ok("","https://example.gumroad.com/l/abc"));
   });
   Test("Unconfigured installation stays Free",()=>Assert(!Licensing.Validate()));
   Test("Sample replay and backward clock cannot inflate coverage",()=>Temp(dir=>{
@@ -51,7 +71,7 @@ static class Tests
   }));
   Test("Release update verifies files and preserves store configuration",()=>Temp(dir=>{
    var src=Path.Combine(dir,"source");var dst=Path.Combine(dir,"installed");Directory.CreateDirectory(src);Directory.CreateDirectory(dst);
-   foreach(var f in ReleaseUpdate.Files){File.WriteAllText(Path.Combine(src,f),f=="commerce.json"?"{}":"new");File.WriteAllText(Path.Combine(dst,f),f=="commerce.json"?"{\"StoreId\":1,\"ProductId\":2,\"VariantId\":3}":"old");}
+   foreach(var f in ReleaseUpdate.Files){File.WriteAllText(Path.Combine(src,f),f=="commerce.json"?"{}":"new");File.WriteAllText(Path.Combine(dst,f),f=="commerce.json"?"{\"GumroadProductId\":\"prod==\"}":"old");}
    bool verified=false;ReleaseUpdate.Apply(src,dst,Path.Combine(dir,"backup"),()=>verified=true);
    Assert(verified && File.ReadAllText(Path.Combine(dst,"PagefileMonitor.exe"))=="new");Assert(Json.Read<CommerceConfig>(File.ReadAllText(Path.Combine(dst,"commerce.json"))).Ready);
   }));

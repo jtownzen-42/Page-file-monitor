@@ -125,7 +125,7 @@ namespace PagefileMonitorRecovery
                     if(!Directory.Exists(Security.Root) || !File.Exists(Path.Combine(Security.Root,"owner.sid")))throw new InvalidOperationException("Install the monitoring service before activation.");
                     using(var form=new Form{Text="Activate Pagefile Monitor Pro",Width=480,Height=190,StartPosition=FormStartPosition.CenterScreen})
                     {
-                        var label=new Label{Text="Enter your Lemon Squeezy license key. It will be sent to Lemon Squeezy for validation.",Left=15,Top=15,Width=430,Height=40};
+                        var label=new Label{Text="Enter the license key from your Gumroad receipt. It will be sent to Gumroad for validation.",Left=15,Top=15,Width=430,Height=40};
                         var input=new TextBox{Left=15,Top=60,Width=430,UseSystemPasswordChar=true,MaxLength=256};
                         var button=new Button{Text="Activate",Left=340,Top=100,DialogResult=DialogResult.OK};
                         form.Controls.AddRange(new Control[]{label,input,button});form.AcceptButton=button;

@@ -66,8 +66,8 @@
     <TextBlock x:Name="LicenseStatus" Text="Free edition" Margin="0,12" FontSize="18"/>
     <TextBlock Text="Free — continuous monitoring, workload markers, history and exports, explained recommendations, reviewed manual changes, backups and recovery." Margin="0,8"/>
     <TextBlock Text="Pro — everything in Free, plus optional automatic growth within your reviewed limits. All learning, disk-space and restart safeguards still apply." Margin="0,8"/>
-    <TextBlock Text="Online license validation is required for automatic growth. If verification is unavailable, automatic growth pauses; monitoring, manual changes and recovery continue." Foreground="#82B7D8" Margin="0,8"/>
-    <WrapPanel><Button Content="Get Pro" Click="BuyPro"/><Button Content="Activate license" Click="ActivateLicense"/><Button Content="Deactivate this PC" Click="DeactivateLicense"/></WrapPanel>
+    <TextBlock Text="A Gumroad license key unlocks automatic growth, for one person on up to three activations. The key is re-checked online about once a day. If Gumroad cannot be reached, Pro stays active; a refund, dispute or rejected key turns it off. Monitoring, manual changes and recovery never need a license." Foreground="#82B7D8" Margin="0,8"/>
+    <WrapPanel><Button Content="Get Pro" Click="BuyPro"/><Button Content="Activate license" Click="ActivateLicense"/><Button Content="Remove license from this PC" Click="DeactivateLicense"/></WrapPanel>
     <TextBlock Text="Inspiration" FontSize="22" Margin="0,28,0,8"/>
     <TextBlock Text="A nod to Dave Plummer and Task Manager TMOG for inspiring a clear, instrument-panel approach to understanding Windows performance. This independently developed app uses its own interface and code."/>
     <WrapPanel><Button Content="Visit tmog.org" Click="TmogSite"/><Button Content="Open TMOG" Click="Tmog"/></WrapPanel>

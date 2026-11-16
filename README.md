@@ -6,7 +6,7 @@ A Windows 11 desktop dashboard and background service that measures memory deman
 
 **Start here:** open `release\PagefileMonitor.exe`, then choose **Install monitoring service**. Accept the administrator prompt yourself. Installation starts measurement at Windows startup; it does not change your page-file settings. Keep all files in the release folder together, including commerce.json.
 
-The app is built for Windows x64 and .NET Framework 4.8, already present on this computer. Free monitoring requires no account. Optional Pro licensing uses Lemon Squeezy; memory telemetry stays local. There is no third-party driver or TMOG dependency. Windows' own `winsqlite3.dll` supplies SQLite. The executables are not code-signed.
+The app is built for Windows x64 and .NET Framework 4.8, already present on this computer. Free monitoring requires no account. Optional Pro licensing uses Gumroad; memory telemetry stays local. There is no third-party driver or TMOG dependency. Windows' own `winsqlite3.dll` supplies SQLite. The executables are not code-signed.
 
 ## How to use it
 
@@ -83,6 +83,6 @@ Compilation, automated tests, live read-only collection, local communication, an
 
 ## Theme and editions
 
-The navy/cyan theme credits Dave Plummer and TMOG for inspiration. Free includes monitoring, recommendations, manual changes and recovery. Pro adds optional auto-grow. Sales are not configured yet. See [Lemon Squeezy setup](docs/LEMON-SQUEEZY.md) for setup, updating an installed service and validation limits.
+The navy/cyan theme credits Dave Plummer and TMOG for inspiration. Free includes monitoring, recommendations, manual changes and recovery. Pro adds optional auto-grow. Sales are not configured yet. See [Gumroad licensing](docs/LICENSING.md) for setup, updating an installed service and validation limits.
 
 
