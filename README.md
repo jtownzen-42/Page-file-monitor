@@ -1,8 +1,8 @@
-# Pagefile Monitor 1.1.2
+# Pagefile Monitor 1.2.0
 
 A Windows 11 desktop dashboard and background service that measures memory demand, explains fixed page-file recommendations, and provides administrator-controlled changes and recovery.
 
-**Existing installation:** use Settings → Update installed service from the new release folder. See the [1.1.2](docs/UPDATE-1.1.2.md) and [1.1.1](docs/UPDATE-1.1.1.md) update notes and the earlier [1.1 maintenance and recovery notes](docs/UPDATE-1.1.md).
+**Existing installation:** use Settings → Update installed service from the new release folder. See the [1.2.0](docs/UPDATE-1.2.0.md), [1.1.2](docs/UPDATE-1.1.2.md) and [1.1.1](docs/UPDATE-1.1.1.md) update notes and the earlier [1.1 maintenance and recovery notes](docs/UPDATE-1.1.md).
 
 **Start here:** open `release\PagefileMonitor.exe`, then choose **Install monitoring service**. Accept the administrator prompt yourself. Installation starts measurement at Windows startup; it does not change your page-file settings. Keep all files in the release folder together, including commerce.json.
 
