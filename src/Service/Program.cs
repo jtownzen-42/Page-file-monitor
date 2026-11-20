@@ -288,6 +288,7 @@ namespace PagefileMonitorService
                 if((args.Length==4 || args.Length==5) && args[0]=="--measure" && args[2]=="--seconds")
                 {
                     int seconds=int.Parse(args[3]);if(seconds<10 || seconds>3600)throw new ArgumentException("Use 10–3600 seconds");
+                    if(args[1]==null || args[1].Contains(".."))throw new ArgumentException("Invalid file path");
                     using(var host=new MonitorHost(Path.GetFullPath(args[1]),true))
                     using(var process=Process.GetCurrentProcess())
                     {
