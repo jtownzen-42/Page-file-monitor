@@ -63,7 +63,7 @@ namespace PagefileMonitorDesktop
   }
   void Render()
   {
-   LicenseStatus.Text=status.Pro?"Pro • verified online":"Free • monitoring and recovery always available";
+   LicenseStatus.Text=status.Pro?"Pro • license active":"Free • monitoring and recovery always available";
    Health.Text=status.Health??"Collecting…";var s=status.Sample;
    if(s!=null)
    {
@@ -260,12 +260,12 @@ namespace PagefileMonitorDesktop
   void Tmog(object sender,RoutedEventArgs e){const string file=@"C:\Program Files\Task Manager TMOG\Task Manager.exe";if(File.Exists(file))Process.Start(new ProcessStartInfo(file){UseShellExecute=true});else MessageBox.Show("TMOG is not installed at the configured location.");}
   void BuyPro(object sender,RoutedEventArgs e)
   {
-   var c=CommerceConfig.Load();Uri uri;
-   if(!c.Ready || !Uri.TryCreate(c.CheckoutUrl,UriKind.Absolute,out uri) || uri.Scheme!="https" || !uri.Host.EndsWith(".lemonsqueezy.com",StringComparison.OrdinalIgnoreCase)){MessageBox.Show("Pro sales are not configured in this build yet. Free features are available now.");return;}
+   Uri uri;
+   if(!CommerceConfig.Load().TryCheckout(out uri)){MessageBox.Show("Pro sales are not configured in this build yet. Free features are available now.");return;}
    Process.Start(new ProcessStartInfo(uri.AbsoluteUri){UseShellExecute=true});
   }
-  async void ActivateLicense(object sender,RoutedEventArgs e)=>await Elevated("--license-activate","Activate Pro for this PC. Enter the key in the administrator dialog; validation sends it to Lemon Squeezy. No memory telemetry is sent. Service status refreshes within one minute.");
-  async void DeactivateLicense(object sender,RoutedEventArgs e)=>await Elevated("--license-deactivate","Release this PC's license activation through Lemon Squeezy. Automatic growth pauses after the next check; Free features and recovery remain available.");
+  async void ActivateLicense(object sender,RoutedEventArgs e)=>await Elevated("--license-activate","Activate Pro for this PC. Enter the key from your Gumroad receipt in the administrator dialog; validation sends it to Gumroad. No memory telemetry is sent. Service status refreshes within one minute.");
+  async void DeactivateLicense(object sender,RoutedEventArgs e)=>await Elevated("--license-deactivate","Remove the license key from this PC. Automatic growth pauses after the next check; Free features and recovery remain available. This does not give back one of the key's three activations.");
   void TmogSite(object sender,RoutedEventArgs e)=>Process.Start(new ProcessStartInfo("https://tmog.org/"){UseShellExecute=true});
   void Tray(object sender,RoutedEventArgs e){tray.Visible=true;Hide();}
  }
