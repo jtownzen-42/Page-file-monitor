@@ -172,7 +172,7 @@ namespace PagefileMonitorDesktop
    var last=live[live.Count-1];var dot=new Ellipse{Width=9,Height=9,Fill=B(Colors.White)};Canvas.SetLeft(dot,X(live.Count-1)-4.5);Canvas.SetTop(dot,Y(last.Commit)-4.5);LiveChart.Children.Add(dot);
    LiveLabel.Text="Live committed memory  •  last "+Span(TimeSpan.FromSeconds((live.Count-1)*3))+"  •  now "+Units.Size((long)last.Commit)+"  •  colour follows the workload marker";
   }
-  static string Dump(int type)=>type==3?"Small memory dump":type==1?"Complete memory dump":type==0?"None":"Kernel / automatic / active (requires review)";
+  static string Dump(int type)=>type==3?"Small memory dump":type==1?"Complete or active memory dump":type==0?"None":type==2?"Kernel memory dump":type==7?"Automatic memory dump":"Unrecognised ("+type+", requires review)";
   string RecommendationDescription()
   {
    var r=status?.Recommendation;if(r==null)return "Learning has not yet produced an estimate.";
@@ -183,6 +183,8 @@ namespace PagefileMonitorDesktop
    if(r.Relocation)sb.AppendLine("Relocation requires two reviewed stages and restart verification before the original is reduced.");
    sb.AppendLine("\nProjected final free space:");foreach(var v in r.ProjectedFree)sb.AppendLine(v.Key+" "+Units.Size(v.Value));
    foreach(string reason in r.Reasons)sb.AppendLine("• "+reason);
+   var dumpType=status?.Snapshot?.DumpType;
+   if(dumpType==2||dumpType==7)sb.AppendLine("\nKernel/automatic dump: the Windows drive keeps at least RAM ÷ 8 (1–32 GiB). A fixed page file does not grow after a failed dump the way a system-managed one can, so a crash may occasionally not be captured.");
    sb.AppendLine("\nEngineering estimate: peak + max(4 GiB, 20% of peak) − usable RAM, plus dump requirements. Future workloads can exceed recorded demand.");return sb.ToString();
   }
   async Task Elevated(string args,string explanation)

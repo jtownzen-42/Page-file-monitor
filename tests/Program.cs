@@ -134,7 +134,28 @@ static class Tests
    f.Current.UptimeSeconds=120;f.Current.Active=f.Current.Entries.Select(x=>new ActivePage{Path=x.Path,AllocatedMB=x.InitialMB}).ToList();manager.Observe(f.Read());Assert(manager.Journal.Phase=="verified");
   }));
   Test("Exhaustion blocks automatic recommendations",()=>{var e=Covered();e.Exhaustion=true;Assert(!RecommendationEngine.Calculate(e,SystemState(),Policy(),now).Ready);});
-  Test("Unsupported dump modes block",()=>{foreach(int mode in new[]{2,7,10}){var s=SystemState();s.DumpType=mode;Assert(!RecommendationEngine.Calculate(Covered(),s,Policy(),now).Ready);}});
+  Test("Unrecognised dump modes block",()=>{foreach(int mode in new[]{-1,4,5,6,8,10}){var s=SystemState();s.DumpType=mode;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);Assert(!r.Ready,"mode "+mode);Assert(r.Reasons.Any(x=>x.Contains("not recognised")),"mode "+mode);}});
+  Test("Dump backing sizes",()=>{
+   Func<int,long,long> mb=RecommendationEngine.DumpBackingMB;
+   Assert(mb(0,32*Units.GiB)==0 && mb(3,32*Units.GiB)==1024 && mb(1,32*Units.GiB)==33025);
+   foreach(int mode in new[]{2,7}){
+    Assert(mb(mode,32*Units.GiB)==4096,"32 GiB is RAM / 8");Assert(mb(mode,33*Units.GiB)==5120,"rounds up to the next GiB");
+    Assert(mb(mode,8*Units.GiB)==1024 && mb(mode,4*Units.GiB)==1024 && mb(mode,0)==1024,"1 GiB minimum");
+    Assert(mb(mode,256*Units.GiB)==32768 && mb(mode,512*Units.GiB)==32768,"32 GiB maximum");
+    Assert(mb(mode,(long)(15.8*Units.GiB))==2048,"usable RAM below a whole GiB rounds up");}
+   Assert(mb(10,32*Units.GiB)==0);
+  });
+  Test("Kernel and automatic dumps allow recommendations",()=>{foreach(int mode in new[]{2,7}){var s=SystemState();s.DumpType=mode;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);Assert(r.Ready,"mode "+mode+": "+string.Join("; ",r.Reasons));Assert(r.CapacityMB==19*1024);Assert(r.Target.Count==1&&r.Target[0].Path.StartsWith("C:"));}});
+  Test("Automatic dump keeps RAM / 8 on the Windows drive when paging moves",()=>{var s=SystemState();s.DumpType=7;s.Volumes[0].Free=15*Units.GiB;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);Assert(r.Ready&&r.Relocation);Assert(r.Target.Any(t=>t.Path.StartsWith("C:")&&t.InitialMB==4096));Assert(r.Target.Any(t=>t.Path.StartsWith("I:")&&t.InitialMB==19*1024-4096));});
+  Test("Automatic dump blocks when the Windows drive cannot keep its dump file",()=>{var s=SystemState();s.DumpType=7;s.Volumes[0].Free=12*Units.GiB;Assert(!RecommendationEngine.Calculate(Covered(),s,Policy(),now).Ready);});
+  Test("Automatic dump never shrinks the total below its backing",()=>{var e=Covered();e.Peak=e.BootPeak=20*Units.GiB;e.Physical=128*Units.GiB;var s=SystemState();s.DumpType=7;var r=RecommendationEngine.Calculate(e,s,Policy(),now);Assert(r.CapacityMB==16384,"128 GiB / 8");});
+  Test("Dedicated dump file still blocks under automatic dump",()=>{var s=SystemState();s.DumpType=7;s.CrashRegistry["DedicatedDumpFile"]=@"D:\dedicated.sys";Assert(!RecommendationEngine.Calculate(Covered(),s,Policy(),now).Ready);});
+  Test("Auto-grow is available under automatic dump",()=>{
+   var s=SystemState();s.DumpType=7;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);var p=Policy();string why;
+   p.AutoGrow=true;p.FirstReviewed=true;p.ApprovedFingerprint=s.Fingerprint();p.ApprovedPaths.Add(@"C:\pagefile.sys");
+   Assert(RecommendationEngine.CanAutoGrow(p,s,r,null,now,out why),why);
+   s.Automatic=true;Assert(!RecommendationEngine.CanAutoGrow(p,s,r,null,now,out why),"system-managed files are never auto-grown");
+  });
   Test("Complete dump backs RAM plus header",()=>{var s=SystemState();s.DumpType=1;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);Assert(r.Target.First(x=>x.Path.StartsWith("C:")).InitialMB>=33025);});
   Test("Low-space C relocates and preserves boot dump file",()=>{var s=SystemState();s.Volumes[0].Free=12*Units.GiB;var r=RecommendationEngine.Calculate(Covered(),s,Policy(),now);Assert(r.Ready&&r.Relocation);Assert(r.Target.Any(t=>t.Path.StartsWith("C:")&&t.InitialMB==1024));Assert(r.Target.Any(t=>t.Path.StartsWith("I:")));});
   Test("No capacity is explicitly blocked",()=>{var s=SystemState();s.Volumes.ForEach(v=>v.Free=0);Assert(!RecommendationEngine.Calculate(Covered(),s,Policy(),now).Ready);});
