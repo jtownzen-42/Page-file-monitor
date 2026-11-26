@@ -20,10 +20,9 @@ namespace PagefileMonitor
             if(e.Physical<=0 || r.Peak<=0 || s.Error!=null) r.Reasons.Add("Essential system measurements unavailable.");
             if(e.Last==0 || now-e.Last>120) r.Reasons.Add("Measurements are stale; resume collection.");
             if(e.Exhaustion) r.Reasons.Add("Windows reported "+(e.ExhaustionCount>0?e.ExhaustionCount+" ":"")+"resource-exhaustion event(s) in the last 90 days"+(e.LastExhaustion>0?"; latest "+DateTimeOffset.FromUnixTimeSeconds(e.LastExhaustion).ToString("yyyy-MM-dd HH:mm")+" UTC":"")+". Resolve the cause and record your review before applying this estimate.");
-            if(s.DumpType!=0 && s.DumpType!=3 && s.DumpType!=1) r.Reasons.Add("Kernel/automatic/active dump backing is unresolved; automatic application is blocked.");
+            if(!DumpSupported(s.DumpType)) r.Reasons.Add("Crash-dump setting "+s.DumpType+" is not recognised; automatic application is blocked.");
             if(s.CrashRegistry.ContainsKey("DedicatedDumpFile") && !string.IsNullOrWhiteSpace(Convert.ToString(s.CrashRegistry["DedicatedDumpFile"]))) r.Reasons.Add("Dedicated dump-file configuration requires independent review.");
-            long bootMB=s.DumpType==1?((e.Physical+Units.GiB-1)/Units.GiB)*1024+257:s.DumpType==3?1024:0;
-            // Complete dumps need the RAM capacity, rounded up, plus header/driver data.
+            long bootMB=DumpBackingMB(s.DumpType,e.Physical);
             r.CapacityMB=Math.Max(r.CapacityMB,bootMB);
             var existing=new HashSet<string>(s.Active.Select(a=>Drive(a.Path)),StringComparer.OrdinalIgnoreCase);
             var candidates=s.Volumes.Where(v=>v.Eligible).OrderByDescending(v=>existing.Contains(v.Drive))
@@ -47,6 +46,27 @@ namespace PagefileMonitor
             r.Ready=r.Reasons.Count==0;
             r.Id=Json.Hash(new { Fingerprint=s.Fingerprint(),r.Target,r.Peak,r.Headroom,r.Ready });
             return r;
+        }
+        // CrashDumpEnabled values: 0 none, 1 complete (or active when FilterPages=1), 2 kernel, 3 small, 7 automatic.
+        public const int DumpNone=0, DumpComplete=1, DumpKernel=2, DumpSmall=3, DumpAutomatic=7;
+        public static bool DumpSupported(int type) => type==DumpNone || type==DumpComplete || type==DumpKernel || type==DumpSmall || type==DumpAutomatic;
+        // Size of the page file that must stay on the Windows drive to back the crash-dump setting, in MB.
+        // Complete (and active) dumps need RAM rounded up to GiB plus 257 MiB of header/driver data.
+        // Small dumps keep a 1 GiB file. Kernel and automatic dumps capture kernel memory only, whose size
+        // varies; Windows sizes a system-managed file for them at RAM / 8 (max 32 GB), which Microsoft says
+        // captures a kernel dump "most of the time". A fixed file never grows after a failed dump the way a
+        // system-managed one does, so the floor is that same RAM / 8, rounded up to GiB, at least 1 GiB.
+        public static long DumpBackingMB(int type,long physical)
+        {
+            long ramGiB=(Math.Max(0,physical)+Units.GiB-1)/Units.GiB;
+            switch(type)
+            {
+                case DumpComplete: return ramGiB*1024+257;
+                case DumpSmall: return 1024;
+                case DumpKernel:
+                case DumpAutomatic: return Math.Min(32,Math.Max(1,(ramGiB+7)/8))*1024;
+                default: return 0;
+            }
         }
         static PageEntry Entry(string drive,long mb)
         { if(mb>uint.MaxValue) throw new InvalidOperationException("Allocation exceeds supported range"); return new PageEntry {Path=drive+@"\pagefile.sys",InitialMB=(uint)mb,MaximumMB=(uint)mb}; }
